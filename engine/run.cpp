@@ -37,44 +37,133 @@ std::string get_param(const std::string& body, const std::string& param) {
     return url_decode(body.substr(start, end - start));
 }
 
-// Simple HTML Interface
+// Beautiful Dark Theme Interface
 const std::string HTML_PAGE = R"(
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TinyGPT Render</title>
+    <title>TinyGPT Render | Dark Edition</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 600px; max-width: 90%; }
-        h1 { color: #333; text-align: center; margin-bottom: 1.5rem; }
-        textarea { width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; resize: none; box-sizing: border-box; outline: none; transition: border 0.3s; }
-        textarea:focus { border-color: #4CAF50; }
-        .controls { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; }
-        .input-group { display: flex; align-items: center; gap: 8px; }
-        input { width: 60px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; }
-        button { background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; transition: background 0.3s; }
-        button:hover { background-color: #45a049; }
-        #result { margin-top: 1.5rem; padding: 15px; background: #f9f9ff; border-radius: 8px; white-space: pre-wrap; border: 1px solid #ddd; min-height: 50px; font-size: 16px; line-height: 1.5; color: #444; }
-        .loader { display: none; text-align: center; margin-top: 10px; font-style: italic; color: #666; }
+        :root {
+            --bg-color: #0a0a0a;
+            --container-bg: #121212;
+            --accent-color: #4CAF50;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --input-bg: #1e1e1e;
+            --border-color: #333;
+        }
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-primary);
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+        }
+        .container { 
+            background: var(--container-bg); 
+            padding: 2.5rem; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 50px rgba(0,0,0,0.5); 
+            width: 700px; 
+            max-width: 90%; 
+            border: 1px solid var(--border-color);
+        }
+        h1 { 
+            color: var(--text-primary); 
+            text-align: center; 
+            margin-bottom: 2rem; 
+            font-weight: 300; 
+            letter-spacing: -1px; 
+        }
+        h1 span { color: var(--accent-color); font-weight: 700; }
+        textarea { 
+            width: 100%; 
+            height: 120px; 
+            padding: 15px; 
+            background: var(--input-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color); 
+            border-radius: 12px; 
+            font-size: 16px; 
+            resize: none; 
+            box-sizing: border-box; 
+            outline: none; 
+            transition: all 0.3s ease; 
+        }
+        textarea:focus { border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2); }
+        .controls { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; }
+        .input-group { display: flex; align-items: center; gap: 10px; color: var(--text-secondary); font-size: 14px; }
+        input { 
+            width: 60px; 
+            padding: 6px; 
+            background: var(--input-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color); 
+            border-radius: 6px; 
+            text-align: center;
+        }
+        button { 
+            background-color: var(--accent-color); 
+            color: white; 
+            padding: 12px 24px; 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            font-weight: 600;
+            transition: all 0.3s ease; 
+        }
+        button:hover { background-color: #45a049; transform: translateY(-2px); }
+        button:disabled { background-color: #333; cursor: not-allowed; transform: none; }
+        #result { 
+            margin-top: 2rem; 
+            padding: 20px; 
+            background: var(--input-bg); 
+            border-radius: 12px; 
+            white-space: pre-wrap; 
+            border: 1px solid var(--border-color); 
+            min-height: 100px; 
+            font-size: 16px; 
+            line-height: 1.6; 
+            color: var(--text-primary); 
+            transition: all 0.3s ease;
+        }
+        .loader { 
+            display: none; 
+            text-align: center; 
+            margin-top: 15px; 
+            font-size: 14px;
+            color: var(--text-secondary); 
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>TinyGPT Render</h1>
+        <h1>TinyGPT <span>Render</span></h1>
         <form id="genForm">
-            <textarea id="prompt" placeholder="Enter your prompt here..." required></textarea>
+            <textarea id="prompt" placeholder="What is the secret of the universe?..." required></textarea>
             <div class="controls">
                 <div class="input-group">
                     <label for="max_tokens">Max Tokens:</label>
                     <input type="number" id="max_tokens" value="50">
                 </div>
-                <button type="submit">Generate</button>
+                <button type="submit" id="submitBtn">Generate</button>
             </div>
         </form>
-        <div id="loader" class="loader">Generating response... please wait...</div>
-        <div id="result">Your generated text will appear here...</div>
+        <div id="loader" class="loader">Thinking...</div>
+        <div id="result">Response will appear here...</div>
     </div>
     <script>
         document.getElementById('genForm').onsubmit = async (e) => {
@@ -83,22 +172,46 @@ const std::string HTML_PAGE = R"(
             const max_tokens = document.getElementById('max_tokens').value;
             const resultDiv = document.getElementById('result');
             const loader = document.getElementById('loader');
+            const submitBtn = document.getElementById('submitBtn');
 
             resultDiv.innerText = '';
             loader.style.display = 'block';
+            submitBtn.disabled = true;
 
             const body = new URLSearchParams({ prompt: prompt, max_tokens: max_tokens });
+            
             try {
                 const response = await fetch('/generate', {
                     method: 'POST',
                     body: body
                 });
-                const text = await response.text();
-                resultDiv.innerText = text;
+
+                if (!response.ok) throw new Error('Server Error');
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullText = '';
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value, { stream: true });
+                    // The server sends "data: token\n\n"
+                    const lines = chunk.split('\\n');
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const token = line.substring(6);
+                            fullText += token;
+                            resultDiv.innerText = fullText;
+                        }
+                    }
+                }
             } catch (err) {
-                resultDiv.innerText = 'Error: ' + err;
+                resultDiv.innerText = 'Error: ' + err.message;
             } finally {
                 loader.style.display = 'none';
+                submitBtn.disabled = false;
             }
         };
     </script>
@@ -217,12 +330,22 @@ int main() {
                 std::string max_tokens_str = get_param(body, "max_tokens");
                 int max_tokens = max_tokens_str.empty() ? 50 : std::stoi(max_tokens_str);
                 
-                std::cout << "Generating for prompt: " << prompt << " (max " << max_tokens << " tokens)\n";
-                std::string result = model.generate(prompt, max_tokens);
+                std::cout << "Streaming for prompt: " << prompt << "\n";
                 
-                std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: " 
-                                     + std::to_string(result.length()) + "\r\n\r\n" + result;
-                send(new_socket, response.c_str(), response.length(), 0);
+                std::string header = "HTTP/1.1 200 OK\r\n"
+                                    "Content-Type: text/event-stream\r\n"
+                                    "Cache-Control: no-cache\r\n"
+                                    "Connection: keep-alive\r\n"
+                                    "Access-Control-Allow-Origin: *\r\n\r\n";
+                send(new_socket, header.c_str(), header.length(), 0);
+
+                model.generate_stream(prompt, max_tokens, [&](std::string token) {
+                    std::string sse_chunk = "data: " + token + "\n\n";
+                    send(new_socket, sse_chunk.c_str(), sse_chunk.length(), 0);
+                });
+
+                std::string end_chunk = "data: [DONE]\n\n";
+                send(new_socket, end_chunk.c_str(), end_chunk.length(), 0);
             } else {
                 std::string response = "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n";
                 send(new_socket, response.c_str(), response.length(), 0);

@@ -7,6 +7,7 @@
 #include<vector>
 #include<chrono>
 #include <omp.h>
+#include <functional>
 
 struct KVCache {
     std::vector<Tensor> ks;
@@ -211,7 +212,9 @@ class Model {
             return forward(input_tokens, caches); 
         }
 
-        std::string generate(const std::string& prompt, int max_new_tokens, float temperature = 0.8f) {
+        void generate_stream(const std::string& prompt, int max_new_tokens, 
+                               std::function<void(std::string)> callback, 
+                               float temperature = 0.8f) {
             std::vector<int> tokens = tokenizer.encode(prompt);
             int vocab_size = this->vocab_size;
             int eos_token = tokenizer.eos();
@@ -253,13 +256,14 @@ class Model {
                 tokens.push_back(next_token);
                 generated_count++;
 
+                std::string word = tokenizer.decode({next_token});
+                callback(word);
+
                 if(next_token == eos_token) break;
 
                 std::vector<int> next_token_context = {next_token};
                 logits = forward(next_token_context, caches);
             }
-
-            return tokenizer.decode(tokens);
         }
 };
 
