@@ -19,10 +19,11 @@ COPY . .
 
 # Compile the application
 # -O3: Maximum optimization
+# -std=c++17: Required for <filesystem>
 # -fopenmp: Enables OpenMP for parallelization
-# -msse4.1: Ensures SSE 4.1 instructions are available
+# -msse2: Basic SSE2 is supported by almost all x86_64 CPUs
 # -I engine: Adds the engine directory to the include path
-RUN g++ -O3 -fopenmp -msse4.1 engine/run.cpp -I engine -o tinygpt_server
+RUN g++ -O3 -std=c++17 -fopenmp -msse2 engine/run.cpp -I engine -o tinygpt_server
 
 # Render uses the PORT environment variable, but your code uses 8080.
 EXPOSE 8080
