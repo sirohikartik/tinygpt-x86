@@ -57,23 +57,25 @@ const std::string HTML_PAGE = R"(
             justify-content: center; 
             min-height: 100vh; 
             overflow-x: hidden;
+            text-align: center;
         }
         .chat-container {
             width: 100%;
             max-width: 700px;
             display: flex;
             flex-direction: column;
+            align-items: center;
             gap: 2rem;
             padding: 2rem;
             box-sizing: border-box;
         }
         #result { 
             width: 100%;
-            font-size: 18px; 
+            font-size: 20px; 
             line-height: 1.6; 
             color: #ddd; 
             white-space: pre-wrap; 
-            text-align: left;
+            text-align: center;
             min-height: 20px;
             transition: opacity 0.3s ease;
         }
@@ -106,6 +108,7 @@ const std::string HTML_PAGE = R"(
             font-size: 16px; 
             outline: none; 
             transition: border-color 0.3s ease;
+            text-align: center;
         }
         input:focus { border-bottom-color: #fff; }
         button { 
@@ -160,10 +163,10 @@ const std::string HTML_PAGE = R"(
 
             resultDiv.innerText = '';
             loader.style.display = 'block';
-            submit laBtn.disabled = true;
+            submitBtn.disabled = true;
             promptInput.value = '';
 
-            const body = new URLSearchParams({ prompt: prompt, max_tokens: 128 });
+            const body = new URLSearchParams({ prompt: prompt, max_tokens: 80 });
             
             try {
                 const response = await fetch('/generate', {
@@ -182,7 +185,7 @@ const std::string HTML_PAGE = R"(
                     if (done) break;
                     
                     const chunk = decoder.decode(value, { stream: true });
-                    const lines = chunk.split('\\n');
+                    const lines = chunk.split('\n');
                     for (const line of lines) {
                         if (line.startsWith('data: ')) {
                             const token = line.substring(6);
@@ -334,7 +337,7 @@ int main() {
                 
                 std::string prompt = get_param(body, "prompt");
                 std::string max_tokens_str = get_param(body, "max_tokens");
-                int max_tokens = max_tokens_str.empty() ? 50 : std::stoi(max_tokens_str);
+                int max_tokens = max_tokens_str.empty() ? 80 : std::stoi(max_tokens_str);
                 
                 if (prompt.empty()) {
                     std::cout << "[Server] Error: Prompt was empty in request body!\n";
