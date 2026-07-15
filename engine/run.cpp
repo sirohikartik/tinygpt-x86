@@ -310,27 +310,55 @@ int main() {
             int new_socket = accept(server_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
             if (new_socket < 0) continue;
 
-            char buffer[4096] = {0};
-            int valread = read(new_socket, buffer, 4096);
-            if (valread <= 0) {
+            std::string request_data;
+            char buffer[1024];
+            while (true) {
+                int valread = read(new_socket, buffer, 1024);
+                if (valread <= 0) break;
+                request_data.append(buffer, valread);
+                if (request_data.find("\r\n\r\n") != std::string::npos) {
+                    // Check if we have the full body based on Content-Length
+                    size_t cl_pos = request_data.find("Content-Length: ");
+                    if (cl_pos != std::string::npos) {
+                        size_t end_line = request_data.find("\r\n", cl_pos);
+                        int content_length = std::stoi(request_data.substr(cl_pos + 16, end_line - (cl_pos + 16)));
+                        size_t body_start = request_data.find("\r\n\r\n") + 4;
+                        if (request_data.length() >= body_start + content_length) {
+                            break; 
+                        }
+                    } else {
+                        // No content length, probably a GET request
+                        if (request_data.find("GET ") != std::string::npos) break;
+                    }
+                }
+            }
+
+            if (request_data.empty()) {
                 close(new_socket);
                 continue;
             }
 
-            std::string request(buffer);
-            if (request.find("GET / ") != std::string::npos) {
+            if (request_data.find("GET / ") != std::string::npos) {
                 std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: " 
                                      + std::to_string(HTML_PAGE.length()) + "\r\n\r\n" + HTML_PAGE;
                 send(new_socket, response.c_str(), response.length(), 0);
-            } else if (request.find("POST /generate") != std::string::npos) {
-                size_t body_pos = request.find("\r\n\r\n");
-                std::string body = (body_pos == std::string::npos) ? "" : request.substr(body_pos + 4);
+            } else if (request_data.find("POST /generate") != std::string::npos) {
+                size_t body_pos = request_data.find("\r\n\r\n");
+                std::string body = (body_pos == std::string::npos) ? "" : request_data.substr(body_pos + 4);
                 
                 std::string prompt = get_param(body, "prompt");
                 std::string max_tokens_str = get_param(body, "max_tokens");
                 int max_tokens = max_tokens_str.empty() ? 50 : std::stoi(max_tokens_str);
                 
-                std::cout << "Streaming for prompt: " << prompt << "\n";
+                if (prompt.empty()) {
+                    std::cout << "[Server] Error: Prompt was empty in request body!\n";
+                    std::string response = "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n";
+                    send(new_socket, response.c_str(), response.length(), 0);
+                    close(new_socket);
+                    continue;
+                }
+
+                std::cout << "[Server] Received prompt: " << prompt << " (Max tokens: " << max_tokens << ")\n";
                 
                 std::string header = "HTTP/1.1 200 OK\r\n"
                                     "Content-Type: text/event-stream\r\n"

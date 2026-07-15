@@ -215,7 +215,12 @@ class Model {
         void generate_stream(const std::string& prompt, int max_new_tokens, 
                                std::function<void(std::string)> callback, 
                                float temperature = 0.8f) {
+            std::cout << "[Model] Encoding prompt: " << prompt << "\n";
             std::vector<int> tokens = tokenizer.encode(prompt);
+            std::cout << "[Model] Token IDs: ";
+            for(int t : tokens) std::cout << t << " ";
+            std::cout << "\n";
+
             int vocab_size = this->vocab_size;
             int eos_token = tokenizer.eos();
 
@@ -229,6 +234,7 @@ class Model {
                 }
             }
 
+            std::cout << "[Model] Processing prompt through layers...\n";
             Tensor logits = forward(tokens, caches);
             
             int generated_count = 0;
@@ -257,13 +263,18 @@ class Model {
                 generated_count++;
 
                 std::string word = tokenizer.decode({next_token});
+                std::cout << "[Model] Generated Token ID: " << next_token << " (\"" << word << "\")\n";
                 callback(word);
 
-                if(next_token == eos_token) break;
+                if(next_token == eos_token) {
+                    std::cout << "[Model] EOS Token reached.\n";
+                    break;
+                }
 
                 std::vector<int> next_token_context = {next_token};
                 logits = forward(next_token_context, caches);
             }
+            std::cout << "[Model] Generation complete. Total tokens: " << tokens.size() << "\n";
         }
 };
 
