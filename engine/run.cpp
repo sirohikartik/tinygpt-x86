@@ -58,7 +58,6 @@ const std::string HTML_PAGE = R"(
             justify-content: center; 
             min-height: 100vh; 
             overflow-x: hidden;
-            text-align: center;
         }
         .chat-container {
             width: 100%;
@@ -69,6 +68,7 @@ const std::string HTML_PAGE = R"(
             gap: 2rem;
             padding: 2rem;
             box-sizing: border-box;
+            margin-bottom: 120px;
         }
         #result { 
             width: 100%;
@@ -92,6 +92,7 @@ const std::string HTML_PAGE = R"(
             gap: 10px;
             padding: 0 20px;
             box-sizing: border-box;
+            z-index: 100;
         }
         .input-wrapper {
             flex-grow: 1;
@@ -136,6 +137,19 @@ const std::string HTML_PAGE = R"(
             font-size: 12px;
             color: #555;
             display: none;
+        }
+        @media (max-width: 600px) {
+            #result { 
+                font-size: 18px; 
+                text-align: left;
+            }
+            .input-area { 
+                bottom: 20px; 
+                padding: 0 10px;
+            }
+            .chat-container {
+                padding: 1rem;
+            }
         }
     </style>
 </head>
