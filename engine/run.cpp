@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <cstdlib>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
@@ -282,7 +283,10 @@ int main() {
         struct sockaddr_in address;
         address.sin_family = AF_INET;
         address.sin_addr.s_addr = INADDR_ANY;
-        address.sin_port = htons(8080);
+        
+        const char* port_env = std::getenv("PORT");
+        int port = port_env ? std::stoi(port_env) : 8080;
+        address.sin_port = htons(port);
 
         if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) < 0) {
             perror("Bind failed");
@@ -294,7 +298,7 @@ int main() {
             return 1;
         }
 
-        std::cout << "Server running on http://localhost:8080\n";
+        std::cout << "Server running on http://0.0.0.0:" << port << "\n";
 
         while (true) {
             int addrlen = sizeof(address);
