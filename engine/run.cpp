@@ -44,133 +44,176 @@ const std::string HTML_PAGE = R"(
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
     <title>TinyGPT</title>
     <style>
-        body { 
-            background-color: #000; 
-            color: #fff; 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
-            margin: 0; 
-            display: flex; 
-            flex-direction: column;
-            align-items: center; 
-            justify-content: center; 
-            min-height: 100vh; 
+        *, *::before, *::after { box-sizing: border-box; }
+
+        :root {
+            --bg: #000;
+            --fg: #fff;
+            --fg-dim: #ddd;
+            --border: #333;
+            --btn-disabled: #333;
+            --input-font: 16px;   /* never below 16px — prevents iOS/Android zoom */
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            background: var(--bg);
+            color: var(--fg);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             overflow-x: hidden;
+            /* Let the page scroll normally — avoids conflicts with the Android keyboard */
+            overflow-y: auto;
+            -webkit-text-size-adjust: 100%;
         }
-        .chat-container {
-            width: 100%;
-            max-width: 700px;
+
+        /* ── Layout ─────────────────────────────────────────────── */
+        .page {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 2rem;
-            padding: 2rem;
-            box-sizing: border-box;
-            margin-bottom: 120px;
+            min-height: 100%;
+            /* Bottom padding keeps content above the fixed input bar */
+            padding-bottom: calc(88px + var(--safe-bottom));
         }
-        #result { 
+
+        .result-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1.25rem;
+        }
+
+        #result {
             width: 100%;
-            font-size: 20px; 
-            line-height: 1.6; 
-            color: #ddd; 
-            white-space: pre-wrap; 
+            max-width: 680px;
+            font-size: clamp(16px, 4.5vw, 20px);
+            line-height: 1.65;
+            color: var(--fg-dim);
+            white-space: pre-wrap;
             text-align: center;
-            min-height: 20px;
-            transition: opacity 0.3s ease;
+            word-break: break-word;
         }
-        .input-area {
+
+        /* ── Fixed input bar ────────────────────────────────────── */
+        .input-bar {
             position: fixed;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 600px;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            /* Respect Android navigation bar / iOS home indicator */
+            padding: 14px 16px calc(14px + var(--safe-bottom));
+            background: var(--bg);
+            border-top: 1px solid #111;
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 0 20px;
-            box-sizing: border-box;
-            z-index: 100;
+            gap: 12px;
+            /* GPU-composited layer — smoother when keyboard slides up */
+            will-change: transform;
+            -webkit-backface-visibility: hidden;
         }
-        .input-wrapper {
-            flex-grow: 1;
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-        input { 
-            width: 100%; 
+
+        input {
+            flex: 1;
+            min-width: 0;           /* prevents flex overflow */
             background: transparent;
-            color: white; 
-            border: none; 
-            border-bottom: 1px solid #333; 
-            padding: 12px 0; 
-            font-size: 16px; 
-            outline: none; 
-            transition: border-color 0.3s ease;
+            color: var(--fg);
+            border: none;
+            border-bottom: 1px solid var(--border);
+            padding: 10px 0;
+            font-size: var(--input-font);  /* 16px stops Android auto-zoom */
+            outline: none;
             text-align: center;
+            transition: border-color 0.25s ease;
+            /* Prevent iOS grey highlight on tap */
+            -webkit-tap-highlight-color: transparent;
+            appearance: none;
+            -webkit-appearance: none;
         }
-        input:focus { border-bottom-color: #fff; }
-        button { 
-            background-color: #fff; 
-            color: #000; 
-            width: 40px; 
-            height: 40px; 
-            border: none; 
-            border-radius: 50%; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            transition: transform 0.2s ease; 
+        input::placeholder { color: #555; }
+        input:focus { border-bottom-color: var(--fg); }
+
+        button {
             flex-shrink: 0;
+            width: 44px;    /* 44×44 minimum touch target (Apple/Google HIG) */
+            height: 44px;
+            background: var(--fg);
+            color: var(--bg);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.18s ease, background 0.18s ease;
+            -webkit-tap-highlight-color: transparent;
+            /* Active state instead of hover for touch devices */
+            touch-action: manipulation;
         }
-        button:hover { transform: scale(1.1); }
-        button:disabled { background-color: #333; cursor: not-allowed; }
-        button svg { width: 20px; height: 20px; }
-        .loader { 
+        button:active { transform: scale(0.92); }
+        @media (hover: hover) {
+            button:hover { transform: scale(1.08); }
+        }
+        button:disabled {
+            background: var(--btn-disabled);
+            cursor: not-allowed;
+            transform: none;
+        }
+        button svg {
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
+        }
+
+        /* ── Loader ─────────────────────────────────────────────── */
+        .loader {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            font-size: 12px;
+            top: 14px;
+            right: 16px;
+            font-size: 11px;
+            letter-spacing: 0.06em;
             color: #555;
             display: none;
-        }
-        @media (max-width: 600px) {
-            #result { 
-                font-size: 18px; 
-                text-align: left;
-            }
-            .input-area { 
-                bottom: 20px; 
-                padding: 0 10px;
-            }
-            .chat-container {
-                padding: 1rem;
-            }
         }
     </style>
 </head>
 <body>
-    <div class="loader" id="loader">Thinking...</div>
-    <div class="chat-container">
-        <div id="result"></div>
-    </div>
-    <div class="input-area">
-        <div class="input-wrapper">
-            <input type="text" id="prompt" placeholder="Ask something..." autocomplete="off">
+    <div class="loader" id="loader">Thinking…</div>
+
+    <div class="page">
+        <div class="result-wrapper">
+            <div id="result"></div>
         </div>
-        <button id="submitBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 12 10 2"></polygon></svg>
+    </div>
+
+    <div class="input-bar">
+        <input
+            type="text"
+            id="prompt"
+            placeholder="Ask something…"
+            autocomplete="off"
+            autocorrect="on"
+            spellcheck="true"
+            enterkeyhint="send"
+        >
+        <button id="submitBtn" aria-label="Send">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 12 10 2"></polygon>
+            </svg>
         </button>
     </div>
+
     <script>
         const promptInput = document.getElementById('prompt');
-        const submitBtn = document.getElementById('submitBtn');
-        const resultDiv = document.getElementById('result');
-        const loader = document.getElementById('loader');
+        const submitBtn   = document.getElementById('submitBtn');
+        const resultDiv   = document.getElementById('result');
+        const loader      = document.getElementById('loader');
 
         async function generate() {
             const prompt = promptInput.value.trim();
@@ -180,34 +223,36 @@ const std::string HTML_PAGE = R"(
             loader.style.display = 'block';
             submitBtn.disabled = true;
             promptInput.value = '';
+            // Dismiss the Android soft keyboard after submission
+            promptInput.blur();
 
-            const body = new URLSearchParams({ prompt: prompt, max_tokens: 80 });
-            
+            const body = new URLSearchParams({ prompt, max_tokens: 80 });
+
             try {
                 const response = await fetch('/generate', {
                     method: 'POST',
-                    body: body
+                    body
                 });
 
-                if (!response.ok) throw new Error('Server Error');
+                if (!response.ok) throw new Error('Server error ' + response.status);
 
-                const reader = response.body.getReader();
+                const reader  = response.body.getReader();
                 const decoder = new TextDecoder();
-                let fullText = '';
+                let fullText  = '';
 
                 while (true) {
                     const { value, done } = await reader.read();
                     if (done) break;
-                    
-                    const chunk = decoder.decode(value, { stream: true });
-                    const lines = chunk.split('\n');
+
+                    const lines = decoder.decode(value, { stream: true }).split('\n');
                     for (const line of lines) {
-                        if (line.startsWith('data: ')) {
-                            const token = line.substring(6);
-                            if (token === '[DONE]') break;
-                            fullText += token;
-                            resultDiv.innerText = fullText;
-                        }
+                        if (!line.startsWith('data: ')) continue;
+                        const token = line.substring(6);
+                        if (token === '[DONE]') break;
+                        fullText += token;
+                        resultDiv.innerText = fullText;
+                        // Keep new text in view when keyboard is closed
+                        resultDiv.scrollIntoView({ block: 'nearest' });
                     }
                 }
             } catch (err) {
@@ -219,12 +264,14 @@ const std::string HTML_PAGE = R"(
         }
 
         submitBtn.onclick = generate;
-        promptInput.onkeydown = (e) => { if (e.key === 'Enter') generate(); };
+        // 'Enter' on the Android soft keyboard fires keydown
+        promptInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); generate(); }
+        });
     </script>
 </body>
 </html>
 )";
-
 int main() {
     omp_set_num_threads(2);
     std::cout << "OMP threads set to 2\n";
