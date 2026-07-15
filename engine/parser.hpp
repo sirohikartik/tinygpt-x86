@@ -1,3 +1,6 @@
+#ifndef PARSER_HPP
+#define PARSER_HPP
+
 #include <stdexcept>
 #include <vector>
 #include <algorithm>
@@ -7,9 +10,11 @@
 #include"tensor.hpp"
 #include<iostream>
 #include<map>
+
 namespace fs = std::filesystem;
-std::string path_header = "weights";
-std::map<std::string,Tensor> parse_weights(){
+inline std::string path_header = "weights";
+
+inline std::map<std::string,Tensor> parse_weights(){
 	std::map<std::string,Tensor> weights;
 	// int i = 0;
 	for(const auto& file : fs::directory_iterator(path_header)){
@@ -32,3 +37,5 @@ std::map<std::string,Tensor> parse_weights(){
 	}
 	return weights;
 }
+
+#endif
