@@ -37,148 +37,133 @@ std::string get_param(const std::string& body, const std::string& param) {
     return url_decode(body.substr(start, end - start));
 }
 
-// Beautiful Dark Theme Interface
+// Ultra Minimalist Black Interface
 const std::string HTML_PAGE = R"(
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TinyGPT Render | Dark Edition</title>
+    <title>TinyGPT</title>
     <style>
-        :root {
-            --bg-color: #0a0a0a;
-            --container-bg: #121212;
-            --accent-color: #4CAF50;
-            --text-primary: #e0e0e0;
-            --text-secondary: #a0a0a0;
-            --input-bg: #1e1e1e;
-            --border-color: #333;
-        }
         body { 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            background-color: var(--bg-color); 
-            color: var(--text-primary);
+            background-color: #000; 
+            color: #fff; 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
             margin: 0; 
             display: flex; 
-            justify-content: center; 
+            flex-direction: column;
             align-items: center; 
+            justify-content: center; 
             min-height: 100vh; 
+            overflow-x: hidden;
         }
-        .container { 
-            background: var(--container-bg); 
-            padding: 2.5rem; 
-            border-radius: 20px; 
-            box-shadow: 0 10px 50px rgba(0,0,0,0.5); 
-            width: 700px; 
-            max-width: 90%; 
-            border: 1px solid var(--border-color);
+        .chat-container {
+            width: 100%;
+            max-width: 700px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            padding: 2rem;
+            box-sizing: border-box;
         }
-        h1 { 
-            color: var(--text-primary); 
-            text-align: center; 
-            margin-bottom: 2rem; 
-            font-weight: 300; 
-            letter-spacing: -1px; 
-        }
-        h1 span { color: var(--accent-color); font-weight: 700; }
-        textarea { 
-            width: 100%; 
-            height: 120px; 
-            padding: 15px; 
-            background: var(--input-bg);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color); 
-            border-radius: 12px; 
-            font-size: 16px; 
-            resize: none; 
-            box-sizing: border-box; 
-            outline: none; 
-            transition: all 0.3s ease; 
-        }
-        textarea:focus { border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2); }
-        .controls { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; }
-        .input-group { display: flex; align-items: center; gap: 10px; color: var(--text-secondary); font-size: 14px; }
-        input { 
-            width: 60px; 
-            padding: 6px; 
-            background: var(--input-bg);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color); 
-            border-radius: 6px; 
-            text-align: center;
-        }
-        button { 
-            background-color: var(--accent-color); 
-            color: white; 
-            padding: 12px 24px; 
-            border: none; 
-            border-radius: 10px; 
-            cursor: pointer; 
-            font-size: 16px; 
-            font-weight: 600;
-            transition: all 0.3s ease; 
-        }
-        button:hover { background-color: #45a049; transform: translateY(-2px); }
-        button:disabled { background-color: #333; cursor: not-allowed; transform: none; }
         #result { 
-            margin-top: 2rem; 
-            padding: 20px; 
-            background: var(--input-bg); 
-            border-radius: 12px; 
-            white-space: pre-wrap; 
-            border: 1px solid var(--border-color); 
-            min-height: 100px; 
-            font-size: 16px; 
+            width: 100%;
+            font-size: 18px; 
             line-height: 1.6; 
-            color: var(--text-primary); 
-            transition: all 0.3s ease;
+            color: #ddd; 
+            white-space: pre-wrap; 
+            text-align: left;
+            min-height: 20px;
+            transition: opacity 0.3s ease;
         }
+        .input-area {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+        .input-wrapper {
+            flex-grow: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        input { 
+            width: 100%; 
+            background: transparent;
+            color: white; 
+            border: none; 
+            border-bottom: 1px solid #333; 
+            padding: 12px 0; 
+            font-size: 16px; 
+            outline: none; 
+            transition: border-color 0.3s ease;
+        }
+        input:focus { border-bottom-color: #fff; }
+        button { 
+            background-color: #fff; 
+            color: #000; 
+            width: 40px; 
+            height: 40px; 
+            border: none; 
+            border-radius: 50%; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            transition: transform 0.2s ease; 
+            flex-shrink: 0;
+        }
+        button:hover { transform: scale(1.1); }
+        button:disabled { background-color: #333; cursor: not-allowed; }
+        button svg { width: 20px; height: 20px; }
         .loader { 
-            display: none; 
-            text-align: center; 
-            margin-top: 15px; 
-            font-size: 14px;
-            color: var(--text-secondary); 
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0% { opacity: 0.5; }
-            50% { opacity: 1; }
-            100% { opacity: 0.5; }
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 12px;
+            color: #555;
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>TinyGPT <span>Render</span></h1>
-        <form id="genForm">
-            <textarea id="prompt" placeholder="What is the secret of the universe?..." required></textarea>
-            <div class="controls">
-                <div class="input-group">
-                    <label for="max_tokens">Max Tokens:</label>
-                    <input type="number" id="max_tokens" value="50">
-                </div>
-                <button type="submit" id="submitBtn">Generate</button>
-            </div>
-        </form>
-        <div id="loader" class="loader">Thinking...</div>
-        <div id="result">Response will appear here...</div>
+    <div class="loader" id="loader">Thinking...</div>
+    <div class="chat-container">
+        <div id="result"></div>
+    </div>
+    <div class="input-area">
+        <div class="input-wrapper">
+            <input type="text" id="prompt" placeholder="Ask something..." autocomplete="off">
+        </div>
+        <button id="submitBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 12 10 2"></polygon></svg>
+        </button>
     </div>
     <script>
-        document.getElementById('genForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const prompt = document.getElementById('prompt').value;
-            const max_tokens = document.getElementById('max_tokens').value;
-            const resultDiv = document.getElementById('result');
-            const loader = document.getElementById('loader');
-            const submitBtn = document.getElementById('submitBtn');
+        const promptInput = document.getElementById('prompt');
+        const submitBtn = document.getElementById('submitBtn');
+        const resultDiv = document.getElementById('result');
+        const loader = document.getElementById('loader');
+
+        async function generate() {
+            const prompt = promptInput.value.trim();
+            if (!prompt) return;
 
             resultDiv.innerText = '';
             loader.style.display = 'block';
-            submitBtn.disabled = true;
+            submit laBtn.disabled = true;
+            promptInput.value = '';
 
-            const body = new URLSearchParams({ prompt: prompt, max_tokens: max_tokens });
+            const body = new URLSearchParams({ prompt: prompt, max_tokens: 128 });
             
             try {
                 const response = await fetch('/generate', {
@@ -197,11 +182,11 @@ const std::string HTML_PAGE = R"(
                     if (done) break;
                     
                     const chunk = decoder.decode(value, { stream: true });
-                    // The server sends "data: token\n\n"
                     const lines = chunk.split('\\n');
                     for (const line of lines) {
                         if (line.startsWith('data: ')) {
                             const token = line.substring(6);
+                            if (token === '[DONE]') break;
                             fullText += token;
                             resultDiv.innerText = fullText;
                         }
@@ -213,7 +198,10 @@ const std::string HTML_PAGE = R"(
                 loader.style.display = 'none';
                 submitBtn.disabled = false;
             }
-        };
+        }
+
+        submitBtn.onclick = generate;
+        promptInput.onkeydown = (e) => { if (e.key === 'Enter') generate(); };
     </script>
 </body>
 </html>
@@ -317,7 +305,6 @@ int main() {
                 if (valread <= 0) break;
                 request_data.append(buffer, valread);
                 if (request_data.find("\r\n\r\n") != std::string::npos) {
-                    // Check if we have the full body based on Content-Length
                     size_t cl_pos = request_data.find("Content-Length: ");
                     if (cl_pos != std::string::npos) {
                         size_t end_line = request_data.find("\r\n", cl_pos);
@@ -327,7 +314,6 @@ int main() {
                             break; 
                         }
                     } else {
-                        // No content length, probably a GET request
                         if (request_data.find("GET ") != std::string::npos) break;
                     }
                 }
@@ -358,7 +344,7 @@ int main() {
                     continue;
                 }
 
-                std::cout << "[Server] Received prompt: " << prompt << " (Max tokens: " << max_tokens << ")\n";
+                std::cout << "[Server] Request received. Prompt: " << prompt << "\n";
                 
                 std::string header = "HTTP/1.1 200 OK\r\n"
                                     "Content-Type: text/event-stream\r\n"

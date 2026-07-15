@@ -215,12 +215,9 @@ class Model {
         void generate_stream(const std::string& prompt, int max_new_tokens, 
                                std::function<void(std::string)> callback, 
                                float temperature = 0.8f) {
-            std::cout << "[Model] Encoding prompt: " << prompt << "\n";
+            auto start_time = std::chrono::high_resolution_clock::now();
+            
             std::vector<int> tokens = tokenizer.encode(prompt);
-            std::cout << "[Model] Token IDs: ";
-            for(int t : tokens) std::cout << t << " ";
-            std::cout << "\n";
-
             int vocab_size = this->vocab_size;
             int eos_token = tokenizer.eos();
 
@@ -234,10 +231,12 @@ class Model {
                 }
             }
 
-            std::cout << "[Model] Processing prompt through layers...\n";
             Tensor logits = forward(tokens, caches);
             
             int generated_count = 0;
+            bool first_token_sent = false;
+            double ttft_ms = 0;
+
             while(generated_count < max_new_tokens) {
                 size_t logit_row = (generated_count == 0) ? (tokens.size() - 1) : 0;
                 
@@ -262,19 +261,30 @@ class Model {
                 tokens.push_back(next_token);
                 generated_count++;
 
+                if (!first_token_sent) {
+                    auto first_token_time = std::chrono::high_resolution_clock::now();
+                    ttft_ms = std::chrono::duration<double, std::milli>(first_token_time - start_time).count();
+                    first_token_sent = true;
+                }
+
                 std::string word = tokenizer.decode({next_token});
-                std::cout << "[Model] Generated Token ID: " << next_token << " (\"" << word << "\")\n";
                 callback(word);
 
-                if(next_token == eos_token) {
-                    std::cout << "[Model] EOS Token reached.\n";
-                    break;
-                }
+                if(next_token == eos_token) break;
 
                 std::vector<int> next_token_context = {next_token};
                 logits = forward(next_token_context, caches);
             }
-            std::cout << "[Model] Generation complete. Total tokens: " << tokens.size() << "\n";
+            
+            auto end_time = std::chrono::high_resolution_clock::now();
+            double total_time_ms = std::chrono::duration<double, std::milli>(end_time - start_time).count();
+            double tps = (generated_count / (total_time_ms / 1000.0));
+
+            std::cout << "\n--- Generation Stats ---\n";
+            std::cout << "TTFT: " << ttft_ms << " ms\n";
+            std::cout << "Tokens/sec: " << tps << "\n";
+            std::cout << "Total Tokens: " << generated_count << "\n";
+            std::cout << "-------------------------\n";
         }
 };
 
